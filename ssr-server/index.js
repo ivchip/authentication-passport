@@ -1,4 +1,5 @@
 const express = require("express");
+const helmet = require('helmet');
 const passport = require("passport");
 const session = require("express-session");
 const boom = require("@hapi/boom");
@@ -11,6 +12,7 @@ const app = express();
 
 // body parser
 app.use(express.json());
+app.use(helmet());
 app.use(cookieParser());
 app.use(session({ secret: config.sessionSecret }));
 app.use(passport.initialize());
@@ -23,7 +25,10 @@ require("./utils/auth/strategies/basic");
 require("./utils/auth/strategies/oauth");
 
 // Twitter strategy
-require("./utils/auth/strategies/twitter");
+// require("./utils/auth/strategies/twitter");
+
+// Facebook strategy
+require("./utils/auth/strategies/facebook");
 
 app.post("/auth/sign-in", async function(req, res, next) {
   passport.authenticate("basic", function(error, data) {
@@ -139,11 +144,32 @@ app.get(
   }
 );
 
-app.get("/auth/twitter", passport.authenticate("twitter"));
+/*app.get("/auth/twitter", passport.authenticate("twitter"));
 
 app.get(
   "/auth/twitter/callback",
   passport.authenticate("twitter", { session: false }),
+  function(req, res, next) {
+    if (!req.user) {
+      next(boom.unauthorized());
+    }
+
+    const { token, ...user } = req.user;
+
+    res.cookie("token", token, {
+      httpOnly: !config.dev,
+      secure: !config.dev
+    });
+
+    res.status(200).json(user);
+  }
+);
+*/
+app.get("/auth/facebook", passport.authenticate("facebook"));
+
+app.get(
+  "/auth/facebook/callback",
+  passport.authenticate("facebook", { session: false }),
   function(req, res, next) {
     if (!req.user) {
       next(boom.unauthorized());
